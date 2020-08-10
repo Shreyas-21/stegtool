@@ -195,7 +195,7 @@ def emd_encrypt(pixels, payload_bytes, indices):
 	#These need a block k * HEADER_LENGTH digits
 	#Retrieve the header from the payload
 	message_length = int.from_bytes(payload_bytes[0:HEADER_LENGTH], 
-									byteorder='big')
+					byteorder='big')
 	message_length_digits = list()
 	#Convert the messsage length to the required base
 	while message_length > 0:
@@ -217,7 +217,7 @@ def emd_encrypt(pixels, payload_bytes, indices):
 	for i in range(0, n * len(payload_digits), n):
 		current_pixel_group = [pixels[j] for j in indices[i:i+n]]
 		current_pixel_group = emd_embed_in_group(current_pixel_group, 
-										payload_digits[int(i / n)], base)
+							payload_digits[int(i / n)], base)
 		#Reflect the changes in the image pixels list
 		for j in range(n):
 			pixels[indices[i+j]] = current_pixel_group[j]
@@ -264,7 +264,7 @@ def de_encrypt(pixels, payload_bytes, indices):
 
 	#Retrieve the header from the payload
 	message_length = int.from_bytes(payload_bytes[0:HEADER_LENGTH], 
-									byteorder='big')
+					byteorder='big')
 	message_length_digits = list()
 	#Convert the header to a sequence of digits in the required base
 	#The final header length is calculated in header_digits, 
@@ -419,7 +419,7 @@ def pvd_encrypt(pixels, payload_bytes, indices):
 	while payload_bits_itr < len(payload_bits):
 		#Find a block to embed next set of bits
 		lower_bound, upper_bound, indices_itr = pvd_find_block(pixels, 
-														indices, indices_itr)
+							indices, indices_itr)
 		#Calculate the capacity of the block
 		num_bits = int(log2(upper_bound - lower_bound + 1))
 		index = indices[indices_itr]
@@ -494,7 +494,7 @@ def encrypt(cover_image, secret_text, encrypt_method, password, destination):
 		pixels_itr = 0
 		while capacity < payload_size and pixels_itr < image_size:
 			lower_bound, upper_bound = pvd_classify(pixels[pixels_itr + 1] - 
-										pixels[pixels_itr], bins)
+								pixels[pixels_itr], bins)
 			capacity = capacity + log2(upper_bound - lower_bound + 1)
 			pixels_itr = pixels_itr + 2
 
@@ -509,7 +509,7 @@ def encrypt(cover_image, secret_text, encrypt_method, password, destination):
 			if image_size % 2 == 0:
 				image_size = image_size - 1
 			indices = get_permutation(random, int(image_size / 2), 
-										int(image_size / 2))
+						int(image_size / 2))
 		else:
 			indices = get_permutation(random, payload_size, image_size)
 		if encrypt_method == 'lsb':
@@ -523,7 +523,7 @@ def encrypt(cover_image, secret_text, encrypt_method, password, destination):
 
 		pixels = get_pixels(cover_image)
 		cover_image = put_pixels(cover_image, steg_pixels, 
-						(encrypt_method == 'pvd'))
+					(encrypt_method == 'pvd'))
 		if destination[-4:] != ".png":
 			destination = destination + ".png"
 		try:
@@ -602,13 +602,13 @@ def emd_decrypt(pixels, image_size, password):
 		random.seed(password)
 		#Retrieve the indices where the header is embdedded
 		header_indices = get_permutation(random, n * k * HEADER_LENGTH, 
-										image_size)
+						image_size)
 		message_size = 0
 		#Compute the message length
 		for i in range(0, n * k * HEADER_LENGTH, n):
 			curr_pixel_group = [pixels[j] for j in header_indices[i:i+n]]
 			message_size = (message_size * base + 
-							emd_function_value(curr_pixel_group, base))
+					emd_function_value(curr_pixel_group, base))
 
 		message_size = (message_size + HEADER_LENGTH) * k * n
 		random.seed(password)
@@ -622,7 +622,7 @@ def emd_decrypt(pixels, image_size, password):
 		for i in range(0, len(message_indices), n):
 			current_pixel_group = [pixels[j] for j in message_indices[i:i+n]]
 			message_digits.append(emd_function_value(current_pixel_group, 
-																	base))
+								base))
 	
 		message = ""
 		#Reconstruct the secret message from the secret digits
@@ -692,7 +692,7 @@ def de_decrypt(pixels, image_size, password):
 			current_character = 0
 			for j in range(digits_per_character):
 				current_character = (current_character * base 
-									+ message_digits[i + j])
+						+ message_digits[i + j])
 			message = message + chr(current_character)
 		return message
 	except:
@@ -716,7 +716,7 @@ def pvd_recover_bits(pixels, indices, indices_itr, size):
 		while bits_recovered < size:
 			#Find the next block which may contain embedded bits
 			lower_bound, upper_bound, indices_itr = pvd_find_block(pixels, 
-													indices, indices_itr)
+								indices, indices_itr)
 			index = indices[indices_itr]
 			diff = pixels[2 * index + 1] - pixels[2 * index]
 			if diff >= 0:
@@ -758,24 +758,24 @@ def pvd_decrypt(pixels, image_size, password):
 		if image_size % 2 == 0:
 			image_size = image_size - 1
 		indices = get_permutation(random, int(image_size / 2), 
-								int(image_size / 2))
+					int(image_size / 2))
 		header_size = 8 * HEADER_LENGTH
 		indices_itr = 0
 		header_bits, indices_itr = pvd_recover_bits(pixels, indices, 
-									indices_itr, header_size)
+							indices_itr, header_size)
 		message_size = 0
 		for bit in header_bits:
 			message_size = message_size * 2 + bit
 		message_size = message_size * 8
 		message = ""
 		message_bits, indices_itr = pvd_recover_bits(pixels, indices, 
-									indices_itr, message_size)
+							indices_itr, message_size)
 		message_bits_itr = 0
 		while message_bits_itr < len(message_bits):
 			current_character = 0
 			for byte_itr in range(8):
 				current_character = (current_character * 2 + 
-								message_bits[message_bits_itr])
+						message_bits[message_bits_itr])
 				message_bits_itr = message_bits_itr + 1
 			message = message + chr(current_character)
 		return message
@@ -835,7 +835,7 @@ def main():
 	
 	if mode == 'e':
 		plaintext_filename = input("Enter the secret"
-							"text file name: ").rstrip()
+					"text file name: ").rstrip()
 		
 		try:
 			plaintext_file = open(plaintext_filename, mode='r', 
@@ -859,7 +859,7 @@ def main():
 			if method not in method_list:
 				print("Invalid method!")
 		dest_filename = input("Enter the name of the"
-						"destination file: ").rstrip()
+				"destination file: ").rstrip()
 		password = input("Enter a password: ").rstrip()
 		encrypt(img, plaintext, method, password, dest_filename)
 
